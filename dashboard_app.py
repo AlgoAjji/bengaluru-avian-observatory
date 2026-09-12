@@ -110,29 +110,32 @@ section[data-testid="stSidebar"] > div {
 section[data-testid="stSidebar"] * { color: var(--ink) !important; }
 section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] * { color: var(--muted) !important; }
 
-/* Selected multiselect pills: high-contrast white text on dark-green chips. */
-section[data-testid="stSidebar"] [data-baseweb="tag"],
+/* Selected multiselect pills: light olive with clearly readable dark text. */
+section[data-testid="stSidebar"] .stMultiSelect [data-baseweb="tag"],
 section[data-testid="stSidebar"] div[data-baseweb="tag"] {
-  background:#d7e6d7 !important;
-  border:1px solid #b7cdb8 !important;
-  color:#1f3927 !important;
+  background:#c8c99a !important;
+  border:1px solid #aeb27b !important;
+  color:#243323 !important;
   opacity:1 !important;
+  box-shadow:none !important;
 }
-section[data-testid="stSidebar"] [data-baseweb="tag"] span,
-section[data-testid="stSidebar"] [data-baseweb="tag"] div,
-section[data-testid="stSidebar"] [data-baseweb="tag"] p,
-section[data-testid="stSidebar"] [data-baseweb="tag"] [data-testid="stMarkdownContainer"],
-section[data-testid="stSidebar"] [data-baseweb="tag"] * {
-  color:#1f3927 !important;
-  -webkit-text-fill-color:#1f3927 !important;
-  fill:#1f3927 !important;
+section[data-testid="stSidebar"] .stMultiSelect [data-baseweb="tag"] span,
+section[data-testid="stSidebar"] .stMultiSelect [data-baseweb="tag"] div,
+section[data-testid="stSidebar"] .stMultiSelect [data-baseweb="tag"] p,
+section[data-testid="stSidebar"] .stMultiSelect [data-baseweb="tag"] [data-testid="stMarkdownContainer"],
+section[data-testid="stSidebar"] .stMultiSelect [data-baseweb="tag"] * {
+  color:#243323 !important;
+  -webkit-text-fill-color:#243323 !important;
+  fill:#243323 !important;
   opacity:1 !important;
+  font-weight:600 !important;
 }
-section[data-testid="stSidebar"] [data-baseweb="tag"] svg,
-section[data-testid="stSidebar"] [data-baseweb="tag"] svg * {
-  color:#1f3927 !important;
-  fill:#1f3927 !important;
-  stroke:#1f3927 !important;
+section[data-testid="stSidebar"] .stMultiSelect [data-baseweb="tag"] svg,
+section[data-testid="stSidebar"] .stMultiSelect [data-baseweb="tag"] svg * {
+  color:#243323 !important;
+  fill:#243323 !important;
+  stroke:#243323 !important;
+  opacity:1 !important;
 }
 
 /* Form controls */
@@ -834,7 +837,7 @@ reddit_links = [
     ("Cubbon Park mornings", "https://www.reddit.com/r/bangalore/comments/1o4hny2/cubbon_park_mornings_are_a_bliss/"),
     ("Trees disappearing / urban habitat loss", "https://www.reddit.com/r/bangalore/comments/1rnxwhr/seeing_an_area_full_of_trees_vanish_into_thin_air/"),
     ("Tree being cut — conservation discussion", "https://www.reddit.com/r/bangalore/comments/1sv45fp/tree_being_cut_what_can_i_do/"),
-    ("Your supplied Reddit post", "https://www.reddit.com/r/bangalore/s/mEQoF21CcO"),
+    ("Indian Grey Hornbill spotted in HSR Layout", "https://www.reddit.com/r/bangalore/s/mEQoF21CcO"),
 ]
 for title,url in reddit_links:
     st.markdown(f"- [{title}]({url})")
