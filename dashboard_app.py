@@ -110,21 +110,29 @@ section[data-testid="stSidebar"] > div {
 section[data-testid="stSidebar"] * { color: var(--ink) !important; }
 section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] * { color: var(--muted) !important; }
 
-/* Selected multiselect pills: keep white text on the dark-green chips. */
+/* Selected multiselect pills: high-contrast white text on dark-green chips. */
+section[data-testid="stSidebar"] [data-baseweb="tag"],
 section[data-testid="stSidebar"] div[data-baseweb="tag"] {
-  background: #42614b !important;
-  border-color: #42614b !important;
+  background:#42614b !important;
+  border:1px solid #42614b !important;
+  color:#ffffff !important;
+  opacity:1 !important;
 }
-section[data-testid="stSidebar"] div[data-baseweb="tag"] span,
-section[data-testid="stSidebar"] div[data-baseweb="tag"] * {
+section[data-testid="stSidebar"] [data-baseweb="tag"] span,
+section[data-testid="stSidebar"] [data-baseweb="tag"] div,
+section[data-testid="stSidebar"] [data-baseweb="tag"] p,
+section[data-testid="stSidebar"] [data-baseweb="tag"] [data-testid="stMarkdownContainer"],
+section[data-testid="stSidebar"] [data-baseweb="tag"] * {
   color:#ffffff !important;
   -webkit-text-fill-color:#ffffff !important;
   fill:#ffffff !important;
   opacity:1 !important;
 }
-section[data-testid="stSidebar"] div[data-baseweb="tag"] svg {
-  color: #ffffff !important;
-  fill: #ffffff !important;
+section[data-testid="stSidebar"] [data-baseweb="tag"] svg,
+section[data-testid="stSidebar"] [data-baseweb="tag"] svg * {
+  color:#ffffff !important;
+  fill:#ffffff !important;
+  stroke:#ffffff !important;
 }
 
 /* Form controls */
@@ -184,6 +192,12 @@ a:hover { color: #20492c !important; }
 .species-card .food-row { display:flex; gap:.75rem; align-items:center; margin:.55rem 0 .8rem; }
 .species-card .food-copy { flex:1; }
 .section-intro { background:#efe7d8; border:1px solid var(--line); border-radius:16px; padding:.8rem 1rem; color:var(--muted) !important; }
+
+/* Bird cards: image-first, no empty header bars, compact contextual layout. */
+.species-card { min-height: 100%; overflow:hidden; }
+.species-card .bird-photo { height: 250px; background: transparent; }
+.species-card h3 { color: var(--ink) !important; }
+.species-card .sci, .species-card .meta, .species-card .food-copy { color: var(--muted) !important; }
 
 /* Buttons */
 .stButton button, .stDownloadButton button {
@@ -459,7 +473,7 @@ def bird_image_for_species(species: str):
         if any(k in s for k in keys):
             p = _asset_file("birds", stem)
             if p is not None:
-                return p, f"Specific project image: {p.name}"
+                return p
 
     # Generic category images supplied by the user.
     generic = [
@@ -481,9 +495,9 @@ def bird_image_for_species(species: str):
         if any(k in s for k in keys):
             p = _asset_file("birds", stem)
             if p is not None:
-                return p, f"Generic category image: {p.name}"
+                return p
 
-    return None, "No supplied category image matches this BirdNET label."
+    return None
 
 badge = ""
 
@@ -568,23 +582,8 @@ k3.metric("Confirmed species", f"{fc['species'].nunique():,}")
 k4.metric("Non-whitelisted / rejected", f"{int((f['detection_status']=='NON_WHITELISTED').sum()):,}")
 k5.metric("Low-confidence events", f"{int((f['detection_status']=='LOW_CONFIDENCE').sum()):,}")
 
-st.markdown("### 🐦 Visual reference gallery")
-st.info("Detected bird names are paired with the closest supplied project image. The photograph is a visual reference from the project library, not species-level visual proof of the acoustic identification.")
-
-def img_data_uri(path):
-    if path is None or not path.exists():
-        return None
-    import base64
-    mime = {".png":"image/png", ".jpg":"image/jpeg", ".jpeg":"image/jpeg", ".webp":"image/webp"}.get(path.suffix.lower(), "image/png")
-    return f"data:{mime};base64," + base64.b64encode(path.read_bytes()).decode("ascii")
-
-gallery = [("Barn Owl", bird_image_for_species("Barn Owl")), ("Grey Hornbill", bird_image_for_species("Grey Hornbill")), ("Black Drongo", bird_image_for_species("Black Drongo")), ("White-throated Kingfisher", bird_image_for_species("White-throated Kingfisher")), ("Ring-necked Parakeet", bird_image_for_species("Ring-necked Parakeet"))]
-cols=st.columns(5)
-for i,(label,path) in enumerate(gallery):
-    with cols[i]:
-        uri=img_data_uri(path)
-        if uri:
-            st.markdown(f"<div class='gallery-card'><img src='{uri}' alt='{label}'><div class='name'>{label}</div><div class='cue'>Visual reference</div></div>", unsafe_allow_html=True)
+st.markdown("### 🐦 Bird profiles")
+st.markdown("<div class='section-intro'>Each profile combines the supplied bird photograph with the acoustic result, diet, food context, habitat and conservation note. Images are used as visual references from the project library; they are not visual proof of the acoustic identification.</div>", unsafe_allow_html=True)
 
 st.markdown("### 🌿 What the station is hearing")
 c1,c2 = st.columns([1.15, 1])
@@ -634,9 +633,6 @@ if len(fc):
     fig.update_layout(height=max(340, 55*len(heat)), paper_bgcolor="rgba(0,0,0,0)")
     st.plotly_chart(fig, use_container_width=True)
 
-st.markdown("### 🐦 Bird profiles")
-st.markdown("<div class='section-intro'>Each card brings the bird photograph, species details, food context, habitat and conservation information together in one view. Filenames and 'generic/specific' technical labels are intentionally hidden from the visitor.</div>", unsafe_allow_html=True)
-
 profile_species = sorted(set(fc["species"]).union({"Rose-ringed Parakeet","Coppersmith Barbet","Wren","Indian Robin","Common Tailorbird"}))
 profile_species = [sp for sp in profile_species if sp in bird_info]
 for start_i in range(0, len(profile_species), 3):
@@ -650,9 +646,9 @@ for start_i in range(0, len(profile_species), 3):
         food_path=food_image_for_label(food_ref) if food_ref else None
         food_uri=img_data_uri(food_path)
         n=int((fc["species"]==sp).sum())
-        img_html=f"<img class='bird-photo' src='{bird_uri}' alt='{sp}'>" if bird_uri else "<div class='bird-photo'></div>"
-        food_html = f"<div class='food-row'><img class='mini-food' src='{food_uri}' alt='{food_ref}'><div class='food-copy'><div class='label'>Food cue</div><div class='meta'>{info['foods']}</div></div></div>" if food_uri else f"<div class='meta'><span class='label'>Food:</span> {info['foods']}</div>"
-        card=f"""<div class='species-card'>{img_html}<h3>{sp}</h3><div class='sci'>{info['sci']}</div><div class='meta'><span class='label'>Confirmed detections in filter:</span> {n}</div><div class='meta'><span class='label'>Diet:</span> {info['diet']}</div>{food_html}<div class='meta'><span class='label'>Habitat:</span> {info['habitat']}</div><div class='meta'><span class='label'>Global status:</span> {info['status']}</div><div class='meta'><span class='label'>Lifespan:</span> {info['lifespan']}</div><div class='meta' style='margin-top:.55rem'>{info['notes']}</div></div>"""
+        img_html=f"<img class='bird-photo' src='{bird_uri}' alt='{sp}'>" if bird_uri else "<div class='bird-photo' style='display:flex;align-items:center;justify-content:center;color:#6f6a60 !important'>Image unavailable</div>"
+        food_html = f"<div class='food-row'><img class='mini-food' src='{food_uri}' alt='{food_ref}'><div class='food-copy'><div class='label'>Food context</div><div class='meta'>{info['foods']}</div></div></div>" if food_uri else f"<div class='meta'><span class='label'>Food:</span> {info['foods']}</div>"
+        card=f"""<div class='species-card'>{img_html}<h3>{sp}</h3><div class='sci'>{info['sci']}</div><div class='meta'><span class='label'>Confirmed detections:</span> {n}</div><div class='meta'><span class='label'>Diet:</span> {info['diet']}</div>{food_html}<div class='meta'><span class='label'>Habitat:</span> {info['habitat']}</div><div class='meta'><span class='label'>Global status:</span> {info['status']}</div><div class='meta'><span class='label'>Lifespan:</span> {info['lifespan']}</div><div class='meta' style='margin-top:.55rem'>{info['notes']}</div></div>"""
         with col: st.markdown(card, unsafe_allow_html=True)
 
 st.markdown("### 👁️ Field observations + acoustic evidence")
