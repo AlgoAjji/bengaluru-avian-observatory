@@ -110,6 +110,23 @@ section[data-testid="stSidebar"] > div {
 section[data-testid="stSidebar"] * { color: var(--ink) !important; }
 section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] * { color: var(--muted) !important; }
 
+/* Selected multiselect pills: keep white text on the dark-green chips. */
+section[data-testid="stSidebar"] div[data-baseweb="tag"] {
+  background: #42614b !important;
+  border-color: #42614b !important;
+}
+section[data-testid="stSidebar"] div[data-baseweb="tag"] span,
+section[data-testid="stSidebar"] div[data-baseweb="tag"] * {
+  color:#ffffff !important;
+  -webkit-text-fill-color:#ffffff !important;
+  fill:#ffffff !important;
+  opacity:1 !important;
+}
+section[data-testid="stSidebar"] div[data-baseweb="tag"] svg {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+
 /* Form controls */
 .stSelectbox label, .stMultiSelect label, .stDateInput label,
 .stNumberInput label, .stSlider label, .stTextInput label,
@@ -151,6 +168,22 @@ a:hover { color: #20492c !important; }
 .js-plotly-plot .annotation-text,
 .js-plotly-plot .colorbar .cbaxis text,
 .js-plotly-plot .axistext { fill: var(--ink) !important; }
+
+/* Species/profile visuals */
+.gallery-card { text-align:center; background:rgba(255,253,248,.55); border:1px solid var(--line); border-radius:18px; padding:.6rem; }
+.gallery-card img { width:100%; height:145px; object-fit:contain; display:block; }
+.gallery-card .name { font-weight:700; margin-top:.35rem; }
+.gallery-card .cue { color:var(--muted) !important; font-size:.82rem; }
+.species-card { background:rgba(255,253,248,.96); border:1px solid var(--line); border-radius:22px; padding:1rem; box-shadow:0 7px 24px rgba(70,55,35,.07); }
+.species-card .bird-photo { width:100%; height:230px; object-fit:contain; display:block; margin:0 auto .45rem; }
+.species-card h3 { margin:.15rem 0 .2rem; font-size:1.18rem; }
+.species-card .sci { color:var(--muted) !important; font-style:italic; font-size:.9rem; margin-bottom:.55rem; }
+.species-card .meta { color:var(--muted) !important; font-size:.9rem; line-height:1.48; }
+.species-card .label { color:var(--ink) !important; font-weight:700; }
+.species-card .mini-food { width:96px; height:72px; object-fit:contain; background:#fbf4e8; border-radius:12px; border:1px solid var(--line); padding:.2rem; }
+.species-card .food-row { display:flex; gap:.75rem; align-items:center; margin:.55rem 0 .8rem; }
+.species-card .food-copy { flex:1; }
+.section-intro { background:#efe7d8; border:1px solid var(--line); border-radius:16px; padding:.8rem 1rem; color:var(--muted) !important; }
 
 /* Buttons */
 .stButton button, .stDownloadButton button {
@@ -469,6 +502,21 @@ def food_image_for_label(label: str):
             return p
     return None
 
+def food_reference_for_text(text: str):
+    """Choose a visual food cue from the species' supplied diet/foods text."""
+    s = str(text).lower()
+    if "nectar" in s or "flower" in s:
+        return "Nectar / flowers"
+    if "fish" in s or "aquatic" in s or "water" in s:
+        return "Fish / aquatic prey"
+    if "insect" in s or "arthropod" in s:
+        return "Insects"
+    if "fruit" in s or "plant" in s:
+        return "Fruit"
+    if "seed" in s or "grain" in s:
+        return "Seeds / grains"
+    return None
+
 # Sidebar
 
 st.sidebar.markdown("## 🐦 Monitor controls")
@@ -520,27 +568,23 @@ k3.metric("Confirmed species", f"{fc['species'].nunique():,}")
 k4.metric("Non-whitelisted / rejected", f"{int((f['detection_status']=='NON_WHITELISTED').sum()):,}")
 k5.metric("Low-confidence events", f"{int((f['detection_status']=='LOW_CONFIDENCE').sum()):,}")
 
-st.markdown("### 🖼️ Local bird-image mapping")
-st.info(
-    "Every detected BirdNET label is matched to a supplied local image whenever its name contains "
-    "one of the configured bird categories. Generic categories include dove, drongo, heron/bittern/egret, "
-    "hornbill, oriole, owl, parakeet, pigeon, robin, sparrow, wren, nightingale and kingfisher. "
-    "Specific supplied images are retained for bulbuls, crows, barbets, Purple Sunbird, Common Myna and "
-    "Common Tailorbird. The image is a visual reference category, not a species-level identification."
-)
+st.markdown("### 🐦 Visual reference gallery")
+st.info("Detected bird names are paired with the closest supplied project image. The photograph is a visual reference from the project library, not species-level visual proof of the acoustic identification.")
 
-mapping_preview = pd.DataFrame([
-    ["Barn Owl", "owl.png", "Generic"],
-    ["Grey Hornbill", "hornbill.png", "Generic"],
-    ["Black Drongo", "drongo.png", "Generic"],
-    ["White-throated Kingfisher", "kingfisher.png", "Generic"],
-    ["Ring-necked Parakeet", "parakeet.png", "Generic"],
-    ["Red-vented Bulbul", "red_vented_bulbul.png", "Specific"],
-    ["Red-whiskered Bulbul", "red_whiskered_bulbul.png", "Specific"],
-    ["House Crow", "house_crow.png", "Specific"],
-    ["Coppersmith Barbet", "white_cheeked_barbett.jpeg", "Specific"],
-], columns=["Detected label", "Local image", "Mapping type"])
-st.dataframe(mapping_preview, use_container_width=True, hide_index=True)
+def img_data_uri(path):
+    if path is None or not path.exists():
+        return None
+    import base64
+    mime = {".png":"image/png", ".jpg":"image/jpeg", ".jpeg":"image/jpeg", ".webp":"image/webp"}.get(path.suffix.lower(), "image/png")
+    return f"data:{mime};base64," + base64.b64encode(path.read_bytes()).decode("ascii")
+
+gallery = [("Barn Owl", bird_image_for_species("Barn Owl")), ("Grey Hornbill", bird_image_for_species("Grey Hornbill")), ("Black Drongo", bird_image_for_species("Black Drongo")), ("White-throated Kingfisher", bird_image_for_species("White-throated Kingfisher")), ("Ring-necked Parakeet", bird_image_for_species("Ring-necked Parakeet"))]
+cols=st.columns(5)
+for i,(label,path) in enumerate(gallery):
+    with cols[i]:
+        uri=img_data_uri(path)
+        if uri:
+            st.markdown(f"<div class='gallery-card'><img src='{uri}' alt='{label}'><div class='name'>{label}</div><div class='cue'>Visual reference</div></div>", unsafe_allow_html=True)
 
 st.markdown("### 🌿 What the station is hearing")
 c1,c2 = st.columns([1.15, 1])
@@ -590,30 +634,26 @@ if len(fc):
     fig.update_layout(height=max(340, 55*len(heat)), paper_bgcolor="rgba(0,0,0,0)")
     st.plotly_chart(fig, use_container_width=True)
 
-st.markdown("### 🍎 Bird diets & habitat cues")
-diet_cols = st.columns(3)
-diet_icon = {"Omnivore":"seeds.png","Granivore":"seeds.png","Fruit / mixed plant food":"fruit.png",
-             "Fruit / mixed diet":"fruit.png","Fruit / seed feeder":"fruit.png",
-             "Nectar feeder":"nectar.png","Insectivore / small aquatic-terrestrial prey":"insects.png",
-             "Insectivore / omnivore":"insects.png","Insectivore":"insects.png",
-             "Carnivore / scavenger":"fish.png","Scavenger / carnivore":"fish.png"}
-for i, sp in enumerate(sorted(set(fc["species"]).intersection(bird_info.keys()))):
-    info=bird_info[sp]
-    col=diet_cols[i%3]
-    with col:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        img_path, img_note = bird_image_for_species(sp)
-        if img_path is not None:
-            st.image(str(img_path), width=220, caption=img_note)
-        else:
-            st.caption(img_note)
+st.markdown("### 🐦 Bird profiles")
+st.markdown("<div class='section-intro'>Each card brings the bird photograph, species details, food context, habitat and conservation information together in one view. Filenames and 'generic/specific' technical labels are intentionally hidden from the visitor.</div>", unsafe_allow_html=True)
 
-        st.markdown(f"**{sp}**{badge}")
-        st.caption(info["sci"])
-        st.write(f"**Diet:** {info['diet']}")
-        st.write(f"**Habitat:** {info['habitat']}")
-        st.caption(info["notes"])
-        st.markdown('</div>', unsafe_allow_html=True)
+profile_species = sorted(set(fc["species"]).union({"Rose-ringed Parakeet","Coppersmith Barbet","Wren","Indian Robin","Common Tailorbird"}))
+profile_species = [sp for sp in profile_species if sp in bird_info]
+for start_i in range(0, len(profile_species), 3):
+    row = profile_species[start_i:start_i+3]
+    cols=st.columns(len(row))
+    for col,sp in zip(cols,row):
+        info=bird_info[sp]
+        bird_path=bird_image_for_species(sp)
+        bird_uri=img_data_uri(bird_path)
+        food_ref=food_reference_for_text(info.get("foods","") or info.get("diet",""))
+        food_path=food_image_for_label(food_ref) if food_ref else None
+        food_uri=img_data_uri(food_path)
+        n=int((fc["species"]==sp).sum())
+        img_html=f"<img class='bird-photo' src='{bird_uri}' alt='{sp}'>" if bird_uri else "<div class='bird-photo'></div>"
+        food_html = f"<div class='food-row'><img class='mini-food' src='{food_uri}' alt='{food_ref}'><div class='food-copy'><div class='label'>Food cue</div><div class='meta'>{info['foods']}</div></div></div>" if food_uri else f"<div class='meta'><span class='label'>Food:</span> {info['foods']}</div>"
+        card=f"""<div class='species-card'>{img_html}<h3>{sp}</h3><div class='sci'>{info['sci']}</div><div class='meta'><span class='label'>Confirmed detections in filter:</span> {n}</div><div class='meta'><span class='label'>Diet:</span> {info['diet']}</div>{food_html}<div class='meta'><span class='label'>Habitat:</span> {info['habitat']}</div><div class='meta'><span class='label'>Global status:</span> {info['status']}</div><div class='meta'><span class='label'>Lifespan:</span> {info['lifespan']}</div><div class='meta' style='margin-top:.55rem'>{info['notes']}</div></div>"""
+        with col: st.markdown(card, unsafe_allow_html=True)
 
 st.markdown("### 👁️ Field observations + acoustic evidence")
 st.info(
@@ -684,58 +724,14 @@ bird_info.setdefault("Green-backed Tailorbird", {
     "user_observed":False,
 })
 
-st.markdown("### 🍎 What they eat — real reference photographs")
-food_cols = st.columns(5)
-food_labels = ["Fruit", "Seeds / grains", "Nectar / flowers", "Insects", "Fish / aquatic prey"]
-for i, food_name in enumerate(food_labels):
+st.markdown("### 🍎 Food & prey context")
+st.markdown("<div class='section-intro'>These photographs illustrate the major food categories represented in the species cards. They are ecological context, not a claim that every individual bird consumes the exact pictured item.</div>", unsafe_allow_html=True)
+food_cols=st.columns(5)
+food_labels=["Fruit","Seeds / grains","Nectar / flowers","Insects","Fish / aquatic prey"]
+for i,food_name in enumerate(food_labels):
     with food_cols[i]:
-        img = food_image_for_label(food_name)
-        if img is not None:
-            st.image(str(img), width=150)
-        st.markdown(f"**{food_name}**")
-st.caption(
-    "These are the real local food/prey photographs supplied in assets/food. "
-    "They illustrate food categories, not a claim that every individual species consumes the pictured item."
-)
-
-st.markdown("### 🐦 Species profile & conservation status")
-st.caption(
-    "Species cards use the supplied local bird-category photographs. Exact project images are used "
-    "for bulbuls, crows, barbets, myna, tailorbird and Purple Sunbird; other BirdNET labels are "
-    "hooked to the closest supplied generic bird category (for example Barn Owl → owl.png, "
-    "Grey Hornbill → hornbill.png)."
-)
-
-rows=[]
-profile_species = set(fc["species"]).union(
-    {
-        "Rose-ringed Parakeet",
-        "Coppersmith Barbet",
-        "Wren",
-        "Indian Robin",
-        "Common Tailorbird",
-    }
-)
-
-for sp in sorted(profile_species):
-    if sp not in bird_info:
-        continue
-    info=bird_info[sp]
-    n=int((fc["species"]==sp).sum())
-    rows.append({
-        "Species":sp,
-        "Scientific name":info["sci"],
-        "Confirmed detections":n,
-        "Global IUCN":info["status"],
-        "Diet":info["diet"],
-        "Habitat":info["habitat"],
-        "Lifespan note":info["lifespan"],
-        "Source":info["pdf"],
-    })
-if rows:
-    st.dataframe(pd.DataFrame(rows).sort_values(["Confirmed detections","Species"], ascending=[False,True]),
-                 use_container_width=True, hide_index=True)
-st.caption("Conservation categories shown here are global IUCN status, not Bengaluru population status. The supplied Bangalore PDFs do not themselves provide IUCN categories or lifespan values; those fields are clearly separated from source-derived habitat/diet notes.")
+        img=food_image_for_label(food_name); uri=img_data_uri(img)
+        if uri: st.markdown(f"<div class='gallery-card'><img src='{uri}' alt='{food_name}'><div class='name'>{food_name}</div></div>",unsafe_allow_html=True)
 
 st.markdown("### 🌳 Bengaluru green infrastructure & habitat context")
 c1,c2 = st.columns(2)
@@ -834,27 +830,19 @@ for title,url in reddit_links:
     st.markdown(f"- [{title}]({url})")
 
 
-st.markdown("### 🍎 Food-photo assets")
-food_rows = []
-for label in ["Fruit", "Seeds / grains", "Nectar / flowers", "Insects", "Fish / aquatic prey"]:
-    img = food_image_for_label(label)
-    food_rows.append((label, img.name if img is not None else "Missing"))
-st.dataframe(pd.DataFrame(food_rows, columns=["Food / prey", "Local asset"]), use_container_width=True, hide_index=True)
+st.markdown("### 📚 Evidence & context used by the dashboard")
+e1, e2, e3 = st.columns(3)
+with e1:
+    st.markdown("**Species, habitat & food**")
+    st.write("The supplied *common_bangalore_birds* reference is used for Bengaluru field descriptions, habitat cues, feeding habits and species notes shown above.")
+with e2:
+    st.markdown("**Garden ecology & urbanisation**")
+    st.write("The supplied *Garden Birds of Bangalore* reference is used for the garden-refuge story, trophic patterns, vegetation and habitat-loss context.")
+with e3:
+    st.markdown("**Urban habitat context**")
+    st.write("The supplied Bengaluru tree-census, BBMP tree-survey and building-height images provide the urban-structure and green-infrastructure context used in the conservation sections.")
+st.caption("The grey-hornbill detection image is retained as project visual evidence. Field observations are kept separate from BirdNET-confirmed acoustic detections; the dashboard does not silently turn a visual observation or low-confidence model output into a confirmed species record.")
 
-st.markdown("### 📚 Source shelf")
-st.markdown("""
-**Supplied project references**
-- `common_bangalore_birds.pdf` — species illustrations, Bangalore field notes and habitat/food clues.
-- `gardenbirdsofbangalore.pdf` — long-form habitat, trophic, garden-management and historical Bangalore bird observations.
-- `blr-tree-census-286k.png` and `bbmp tree survey.jpeg` — urban tree context.
-- `building heights survey bangalore.jpeg` — urban form context.
-- `grey hornbill detection.jpeg` — example visual evidence from the project.
-- User-observed species are explicitly separated from confirmed acoustic detections.
-
-**External research sources used for status cross-checking**
-- IUCN Red List
-- State of India's Birds
-- Cornell Lab / All About Birds
-""")
+st.markdown("**How to interpret the food photographs:** each species card now places one relevant local food/prey image next to its diet text. These are illustrative food categories, not proof that every individual consumes the exact pictured item.")
 
 st.caption("Design note: the dashboard deliberately separates model output, temporal confirmation, habitat interpretation and conservation status. It should not be read as proving a causal link between tree removal and any single species trend.")
