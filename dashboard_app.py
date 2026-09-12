@@ -6,7 +6,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from pathlib import Path
 from datetime import datetime, date, timedelta
-import math, re
+import math, re, base64, mimetypes
 
 BASE = Path(__file__).parent
 ASSET = BASE / "assets"
@@ -113,9 +113,9 @@ section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] * { color: v
 /* Selected multiselect pills: high-contrast white text on dark-green chips. */
 section[data-testid="stSidebar"] [data-baseweb="tag"],
 section[data-testid="stSidebar"] div[data-baseweb="tag"] {
-  background:#42614b !important;
-  border:1px solid #42614b !important;
-  color:#ffffff !important;
+  background:#d7e6d7 !important;
+  border:1px solid #b7cdb8 !important;
+  color:#1f3927 !important;
   opacity:1 !important;
 }
 section[data-testid="stSidebar"] [data-baseweb="tag"] span,
@@ -123,16 +123,16 @@ section[data-testid="stSidebar"] [data-baseweb="tag"] div,
 section[data-testid="stSidebar"] [data-baseweb="tag"] p,
 section[data-testid="stSidebar"] [data-baseweb="tag"] [data-testid="stMarkdownContainer"],
 section[data-testid="stSidebar"] [data-baseweb="tag"] * {
-  color:#ffffff !important;
-  -webkit-text-fill-color:#ffffff !important;
-  fill:#ffffff !important;
+  color:#1f3927 !important;
+  -webkit-text-fill-color:#1f3927 !important;
+  fill:#1f3927 !important;
   opacity:1 !important;
 }
 section[data-testid="stSidebar"] [data-baseweb="tag"] svg,
 section[data-testid="stSidebar"] [data-baseweb="tag"] svg * {
-  color:#ffffff !important;
-  fill:#ffffff !important;
-  stroke:#ffffff !important;
+  color:#1f3927 !important;
+  fill:#1f3927 !important;
+  stroke:#1f3927 !important;
 }
 
 /* Form controls */
@@ -451,6 +451,20 @@ def _asset_file(folder: str, stem: str):
             if p_norm == stem_norm:
                 return p
     return None
+
+def img_data_uri(path):
+    """Return a local image as a browser-safe data URI for embedded HTML."""
+    if path is None:
+        return None
+    try:
+        p = Path(path)
+        if not p.exists() or not p.is_file():
+            return None
+        mime = mimetypes.guess_type(p.name)[0] or "application/octet-stream"
+        encoded = base64.b64encode(p.read_bytes()).decode("ascii")
+        return f"data:{mime};base64,{encoded}"
+    except Exception:
+        return None
 
 def bird_image_for_species(species: str):
     """Return a supplied local image for the detected/model species.
