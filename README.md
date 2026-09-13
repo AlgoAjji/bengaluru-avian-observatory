@@ -1,6 +1,11 @@
 # Bengaluru Urban Avian Bio-Acoustic Observatory
 
-Streamlit dashboard for the Arduino UNO Q + BirdNET Bengaluru monitoring station.
+Streamlit dashboard for the Arduino UNO Q + BirdNET Bengaluru monitoring station. This is a part of the Eco Sentinel Project on hackster.io.
+
+
+## 🌐 Live Streamlit Dashboard
+
+[![Open Dashboard](https://img.shields.io/badge/Live%20Dashboard-Open%20App-2e7d32?style=for-the-badge)](https://bengaluru-avian-observatory-kjjlkakjhuijdsskw8wby9.streamlit.app/)
 
 ## Run locally
 ```bash
@@ -20,4 +25,4 @@ Create a public GitHub repository and upload this folder. Then create a Streamli
 - Main file: `dashboard_app.py`
 - Python dependencies: root `requirements.txt`
 
-Do not upload `birdnet_model.onnx` or `birds.db` to a public repository.
+
